@@ -1,0 +1,25 @@
+{
+  "name": "max-commerce/catalog-export-import",
+  "description": "Maxcommerce catalog export-import module",
+  "keywords": [
+    "yii2",
+    "e-commerce",
+    "maxcommerce",
+    "products",
+    "catalog",
+    "export",
+    "import"
+  ],
+  "homepage": "https://github.com/max-commerce/catalog-export-import",
+  "type": "yii2-extension",
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=5.4.0",
+    "yiisoft/yii2": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "maxcom\\catalog\\exportimport": ""
+    }
+  }
+}
