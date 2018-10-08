@@ -1,10 +1,10 @@
 # Catalog porter
-######Yii2 ready wrapper for simple CSV exporting and importing  
+###### Yii2 ready wrapper for simple CSV exporting and importing  
 
-#instalation
+# instalation
 `The preferred way to install this extension is through composer.`
 
-####Install
+#### Install
    Either run   
 ```bash
 $ php composer.phar require max-commerce/catalog-export-import "*"
@@ -15,7 +15,7 @@ or add
 ```   
 to the require section of your composer.json file.
 
-####Configurate 
+#### Configurate 
 
 ```php
 //in your app config:
@@ -85,7 +85,7 @@ public function actions() {
 
 //Also you can use component without Yii2 Container 
 //like:
-// $porter = new ImportExport([
+$porter = new ImportExport([
     'exportQuery' => 'Your export ActiveQuery',
     'attributesToNames' => 'Your human understanding lables' 
 ]);
