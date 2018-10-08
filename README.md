@@ -1,7 +1,7 @@
 # Catalog porter
 ###### Yii2 ready wrapper for simple CSV exporting and importing  
 
-# instalation
+# installation
 `The preferred way to install this extension is through composer.`
 
 #### Install
