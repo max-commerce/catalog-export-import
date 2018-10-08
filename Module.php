@@ -12,8 +12,8 @@ class Module extends \yii\base\Module {
             'label' => 'CSV Импорт/Экспорт',
             'icon' => 'refresh',
             'items' => [
-                ['url' => ['import-export/default/import'], 'label' => 'Импорт'],
-                ['url' => ['import-export/default/export'], 'label' => 'Экспорт']
+                ['url' => ['/import-export/default/import'], 'label' => 'Импорт'],
+                ['url' => ['/import-export/default/export'], 'label' => 'Экспорт']
             ]
         ];
     }
