@@ -11,36 +11,53 @@ use yii\helpers\Html;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
-class ImportAction extends Action {
+class ImportAction extends Action
+{
 
-    public function run() {
-        if(Yii::$app->request->isPost) {
+    public function run()
+    {
+        if (Yii::$app->request->isPost) {
             return $this->do();
         } else {
             return $this->getFile();
         }
     }
 
-    private function getFile() {
+    private function do()
+    {
+        $model = new Import();
+        $model->importFile = UploadedFile::getInstance($model, 'importFile');
+        $fileHandle = fopen($model->importFile->tempName, 'r');
+        $data = [];
+        while ($line = fgets($fileHandle)) {
+            $data[] = str_getcsv($line, ';');
+        }
+        $porter = Yii::$app->importExport;
+        if ($content = $porter->import($data)) {
+            Yii::$app->session->setFlash('success', 'Импорт прошел успешно');
+            return $this->controller->renderContent($content);
+        }
+
+    }
+
+    private function getFile()
+    {
         $model = new Import();
         return $this->controller->render('@vendor/max-commerce/catalog-export-import/views/get-file', [
             'model' => $model,
         ]);
     }
 
-    private function do() {
-        $model = new Import();
-        $model->importFile = UploadedFile::getInstance($model,'importFile');
-        $fileHandle = fopen($model->importFile->tempName,'r');
-        $data = [];
-        while($line = fgets($fileHandle)) {
-            $data[] = str_getcsv($line,';');
-        }
-        $porter = Yii::$app->importExport;
-        if($content = $porter->import($data)) {
-            Yii::$app->session->setFlash('success','Импорт прошел успешно');
-            return $this->controller->renderContent($content);
-        }
-
+    public function import() {
+        $cfg = [
+            'A' => [
+                'class' => 'ShopProducts',
+                'attribute' => 'name',
+            ],
+            'B' => [
+                'class' => 'ShopProductsAttributes',
+                'attribute' => 'value',
+            ]
+        ];
     }
 }
