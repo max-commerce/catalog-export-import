@@ -65,6 +65,10 @@ class ImportExport extends \yii\base\Component {
             $relLink = $relQuery->link;
 
             if($rel = $relModel::findOne([$relAttr => $propValue])) {//Ищем модель, если она существует привязываем ее к модели и сохраняем
+                foreach ($relLink as $relKey => $modelKey) {
+                    $model->{$modelKey} = $rel->{$relKey};
+                }
+                $model->save();
                 return $rel;
             } else {
                 $rel = new $relModel([
