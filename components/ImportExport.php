@@ -10,6 +10,7 @@ use yii\db\ActiveRecord;
 class ImportExport extends \yii\base\Component {
     /** @var Сюда записываем все о импорте  */
     public $importConfig;
+    public $customAttributesMechs;
 
     private $_importMeta;
     private $_importBaseClass;
@@ -54,7 +55,7 @@ class ImportExport extends \yii\base\Component {
 
     private function _saveRelation(ActiveRecord $model, $attribute, $propValue = null) :? ActiveRecord
     {
-        if(strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
+        if($attribute instanceof string && strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
             //ПОлучаем метаданные о связи
             $relationPath = explode('.', $attribute);
             $relProp = $relationPath[0];
@@ -86,6 +87,16 @@ class ImportExport extends \yii\base\Component {
         return null;
     }
 
+    private function _processCustomAttributes($fileRow, $model) {
+        foreach ($fileRow as $key => $value) {
+            $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
+            if($attribute instanceof \Closure) {
+                $processMethod = $attribute;
+                $processMethod($model, $value);
+            }
+        }
+    }
+
     private function _saveRelationsData($fileRow, $model) {
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
@@ -111,6 +122,7 @@ class ImportExport extends \yii\base\Component {
                 $model->load($data);
                 $model->save();
                 $this->_saveRelationsData($csvRow, $model);
+                $this->_processCustomAttributes($csvRow, $model);
                 //Логика обновления записей
                 //Тут нам нужно найти все релейшены и обновить их атрибуты в зависимости от их классов
                 //Проблема в нахождении релейшенов...
@@ -152,7 +164,10 @@ class ImportExport extends \yii\base\Component {
         $result = [];
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
-            $result[$model->formName()][$attribute] = $value;
+            if($attribute instanceof string) {
+                $result[$model->formName()][$attribute] = $value;
+            }
+
         }
         return $result;
     }
