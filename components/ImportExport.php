@@ -11,6 +11,7 @@ class ImportExport extends \yii\base\Component {
     /** @var Сюда записываем все о импорте  */
     public $importConfig;
     public $customAttributesMechs;
+    public $exportFileColumnsToClassAttributes;
 
     private $_importMeta;
     private $_importBaseClass;
@@ -255,12 +256,57 @@ class ImportExport extends \yii\base\Component {
      */
     private function _prepareProductsToExport()
     {
-        foreach ($this->_queryProducts()->asArray()->batch(300) as $batch) {
-            foreach($batch as $partResult) {
-                $this->_productsToProcess[] = $partResult;
+        foreach ($this->_queryProducts()->batch(300) as $batch) {
+            foreach($batch as $partResultModel) {
+                $this->_productsToProcess[] = $this->_processModelToExport($partResultModel);
             }
         }
+
     }
+
+    private function _processModelToExport(ActiveRecord $model) {
+        $columns = $this->_getExportFileColumns();
+        $result = [];
+        foreach ($columns as $column) {
+            $result[] = $this->_processExportColumn($column, $model);
+        }
+        return $result;
+    }
+
+    private function _processExportColumn($column, ActiveRecord $model) {
+        if($column instanceof \Closure) {
+            return $this->_processExportClosureColumn($column, $model);
+        } elseif(strpos($column,'.')) {
+            return $this->_processExportRelationColumn($column, $model);
+        } else {
+            return $model->{$column};
+        }
+    }
+
+    private function _processExportRelationColumn(string $attribute, ActiveRecord $model) :? string {
+        $relationPath = explode('.', $attribute);
+        $relProp = $relationPath[0];
+        $relAttr = $relationPath[1];
+        $relMethod = 'get' . lcfirst($relProp);
+        $relQuery = $model->$relMethod();
+        $relModel = $relQuery->modelClass;
+        $relLink = $relQuery->link;
+        if($rel = $model->{$relProp}) {
+            return $rel->{$relAttr};
+        } else {
+            return null;
+        }
+    }
+    private function _processExportClosureColumn(\Closure $closure, ActiveRecord $model) :? string {
+        return $closure($model);
+    }
+
+    private  function _getExportFileColumns() {
+        $resultRow = [];
+        $columns = \Yii::$app->importExport->exportFileColumnsToClassAttributes;
+        return $columns;
+    }
+
 
     /**
      * @return \yii\db\ActiveQuery

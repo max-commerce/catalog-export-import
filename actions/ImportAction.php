@@ -5,6 +5,7 @@ namespace maxcom\catalog\exportimport\actions;
 use maxcom\catalog\exportimport\components\ImportExport;
 
 use maxcom\catalog\exportimport\models\Import;
+use Symfony\Component\Translation\Loader\CsvFileLoader;
 use Yii;
 use yii\base\Action;
 use yii\helpers\Html;
@@ -28,6 +29,8 @@ class ImportAction extends Action
         $model = new Import();
         $model->importFile = UploadedFile::getInstance($model, 'importFile');
         $fileHandle = fopen($model->importFile->tempName, 'r');
+        $loader = new CsvFileLoader();
+        $loader->load($fileHandle);
         $data = [];
         while ($line = fgets($fileHandle)) {
             $data[] = str_getcsv($line, ';');
