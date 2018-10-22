@@ -3,6 +3,7 @@
 namespace maxcom\catalog\exportimport\components;
 
 use maxcom\catalog\exportimport\models\Import;
+use Mpdf\Tag\P;
 use yii\base\ErrorException;
 use yii\base\InvalidConfigException;
 use yii\db\ActiveRecord;
@@ -165,10 +166,9 @@ class ImportExport extends \yii\base\Component {
         $result = [];
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
-            if($attribute instanceof string) {
+            if(gettype($attribute) == 'string') {
                 $result[$model->formName()][$attribute] = $value;
             }
-
         }
         return $result;
     }
@@ -184,8 +184,15 @@ class ImportExport extends \yii\base\Component {
     {
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
-            if($this->_getPrimaryByClassName($this->_importBaseClass) == $attribute) {
+            if(empty($this->importConfig['baseModelSearchAttribute']) && $this->_getPrimaryByClassName($this->_importBaseClass) == $attribute) {
                 $model = $this->_importBaseClass::findOne($value);
+                if($model) {
+                    return $model;
+                } else {
+                    $model = new $this->_importBaseClass;
+                }
+            } elseif(!empty($this->importConfig['baseModelSearchAttribute']) && $attribute == $this->importConfig['baseModelSearchAttribute']) {
+                $model = $this->_importBaseClass::findOne([$attribute => $value]);
                 if($model) {
                     return $model;
                 } else {
