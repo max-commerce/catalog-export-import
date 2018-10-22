@@ -2,8 +2,8 @@
 
 namespace maxcom\catalog\exportimport\actions;
 
+use Keboola\Csv\CsvReader;
 use maxcom\catalog\exportimport\components\ImportExport;
-
 use maxcom\catalog\exportimport\models\Import;
 use Symfony\Component\Translation\Loader\CsvFileLoader;
 use Yii;
@@ -11,6 +11,7 @@ use yii\base\Action;
 use yii\helpers\Html;
 use yii\web\Response;
 use yii\web\UploadedFile;
+use yiiunit\extensions\jui\SelectableTest;
 
 class ImportAction extends Action
 {
@@ -26,14 +27,13 @@ class ImportAction extends Action
 
     private function do()
     {
+        set_time_limit(0);
         $model = new Import();
         $model->importFile = UploadedFile::getInstance($model, 'importFile');
-        $fileHandle = fopen($model->importFile->tempName, 'r');
-        $loader = new CsvFileLoader();
-        $loader->load($fileHandle);
+        $csvFile = new CsvReader($model->importFile->tempName,';');
         $data = [];
-        while ($line = fgets($fileHandle)) {
-            $data[] = str_getcsv($line, ';');
+        foreach($csvFile as $row) {
+            $data[] = $row;
         }
         $porter = Yii::$app->importExport;
         if ($content = $porter->import($data)) {
