@@ -121,7 +121,7 @@ class ImportExport extends \yii\base\Component {
             $model = $this->_findModelByRow($csvRow);
             if(!$model->isNewRecord) { //Нашли основную модель
                 $data = $this->_setAttributesByRow($csvRow, $model);
-                $model->load($data);
+                $model->load([$model->formName() => $data]);
                 $model->save();
                 $this->_saveRelationsData($csvRow, $model);
                 $this->_processCustomAttributes($csvRow, $model);
@@ -167,7 +167,7 @@ class ImportExport extends \yii\base\Component {
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
             if(gettype($attribute) == 'string') {
-                $result[$model->formName()][$attribute] = $value;
+                $result[$model->formName()][$attribute] = mb_convert_encoding($value, "utf-8", "windows-1251");
             }
         }
         return $result;
