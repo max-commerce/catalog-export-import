@@ -58,7 +58,7 @@ class ImportExport extends \yii\base\Component {
     private function _saveRelation(ActiveRecord $model, $attribute, $propValue = null) :? ActiveRecord
     {
         if($attribute instanceof string && strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
-            //ПОлучаем метаданные о связи
+                //ПОлучаем метаданные о связи
             $relationPath = explode('.', $attribute);
             $relProp = $relationPath[0];
             $relAttr = $relationPath[1];
@@ -125,22 +125,17 @@ class ImportExport extends \yii\base\Component {
                 $model->save();
                 $this->_saveRelationsData($csvRow, $model);
                 $this->_processCustomAttributes($csvRow, $model);
-                //Логика обновления записей
-                //Тут нам нужно найти все релейшены и обновить их атрибуты в зависимости от их классов
-                //Проблема в нахождении релейшенов...
-                //Пока просто заполним атрибуты
             } else { //Не нашли основную модель
                 //Подготовим данные для LOAD
                 $data = $this->_setAttributesByRow($csvRow, $model);
                 $model->load($data);
                 $model->save();
                 $this->_saveRelationsData($csvRow, $model);
+                $this->_processCustomAttributes($csvRow, $model);
             }
         }
         return true;
     }
-
-
 
 
     /**
