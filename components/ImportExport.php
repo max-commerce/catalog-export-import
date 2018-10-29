@@ -57,7 +57,7 @@ class ImportExport extends \yii\base\Component {
 
     private function _saveRelation(ActiveRecord $model, $attribute, $propValue = null) :? ActiveRecord
     {
-        if($attribute instanceof string && strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
+        if(gettype($attribute) == 'string' && strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
                 //ПОлучаем метаданные о связи
             $relationPath = explode('.', $attribute);
             $relProp = $relationPath[0];
