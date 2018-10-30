@@ -12,9 +12,12 @@ class Import extends Model
      */
     public $importFile;
 
+    public $flushMainTable;
+
     public function rules()
     {
         return [
+            [['flushMainTable'], 'integer'],
             [['importFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'csv'],
         ];
     }
