@@ -6,6 +6,8 @@ class Module extends \yii\base\Module {
 
     public $controllerNamespace = 'maxcom\catalog\exportimport\admin\controllers';
 
+    public $permissions = ['admin'];
+
     public function getMenuItems() {
         return [
             'url' => '#',
