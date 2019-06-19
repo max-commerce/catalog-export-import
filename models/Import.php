@@ -18,7 +18,7 @@ class Import extends Model
     {
         return [
             [['flushMainTable'], 'integer'],
-            [['importFile'], 'file', 'skipOnEmpty' => false, 'extensions' => 'csv'],
+            [['importFile'], 'file', 'skipOnEmpty' => false, 'extensions' => ['csv','xls']],
         ];
     }
 }
