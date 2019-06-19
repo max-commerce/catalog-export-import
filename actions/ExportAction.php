@@ -3,7 +3,6 @@
 namespace maxcom\catalog\exportimport\actions;
 
 use maxcom\catalog\exportimport\components\ImportExport;
-use voku\helper\UTF8;
 use Yii;
 use yii\base\Action;
 use yii\web\Response;
