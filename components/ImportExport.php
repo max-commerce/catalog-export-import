@@ -54,39 +54,35 @@ class ImportExport extends \yii\base\Component {
         }
     }
 
+    private function _getRelationMetaByAttribute($attribute, $model) {
+        list($relProp, $relAttr) = explode('.', $attribute);
+        $relMethod = 'get' . lcfirst($relProp); //getCategory
+        $relQuery = $model->$relMethod(); // $model->getCategory()
+        $relModel = $relQuery->modelClass; // $model->getCategory()->modelClass
+        $relLink = $relQuery->link; // ['category_id', 'id']
 
-    private function _saveRelation(ActiveRecord $model, $attribute, $propValue = null) :? ActiveRecord
-    {
-        if(gettype($attribute) == 'string' && strpos($attribute,'.')) { //Значит идет обращене к атрибуту релейшена
-                //ПОлучаем метаданные о связи
-            $relationPath = explode('.', $attribute);
-            $relProp = $relationPath[0];
-            $relAttr = $relationPath[1];
-            $relMethod = 'get' . lcfirst($relProp);
-            $relQuery = $model->$relMethod();
-            $relModel = $relQuery->modelClass;
-            $relLink = $relQuery->link;
+        return [
+            'method' => $relMethod,
+            'query' => $relQuery,
+            'model' => $relModel,
+            'link' => $relLink
+        ];
+    }
 
-            if($rel = $relModel::findOne([$relAttr => $propValue])) {//Ищем модель, если она существует привязываем ее к модели и сохраняем
-                foreach ($relLink as $relKey => $modelKey) {
-                    $model->{$modelKey} = $rel->{$relKey};
-                }
-                $model->save();
-                return $rel;
-            } else {
-                $rel = new $relModel([
-                    $relAttr => $propValue,
-                ]);
-                $rel->save();
-                foreach ($relLink as $relKey => $modelKey) {
-                    $model->{$modelKey} = $rel->{$relKey};
-                }
-                $model->save();
-                return $rel;
-            }
-       }
+    private function _getRelationMethodByAttribute($attribute, $model) {
+        return $this->_getRelationMetaByAttribute($attribute, $model)['method'];
+    }
 
-        return null;
+    private function _getRelationQueryByAttribute($attribute, $model) {
+        return $this->_getRelationMetaByAttribute($attribute, $model)['query'];
+    }
+
+    private function _getRelationModelByAttribute($attribute, $model) {
+        return $this->_getRelationMetaByAttribute($attribute, $model)['model'];
+    }
+
+    private function _getRelationLinkByAttribute($attribute, $model) {
+        return $this->_getRelationMetaByAttribute($attribute, $model)['link'];
     }
 
     private function _processCustomAttributes($fileRow, $model) {
@@ -99,12 +95,6 @@ class ImportExport extends \yii\base\Component {
         }
     }
 
-    private function _saveRelationsData($fileRow, $model) {
-        foreach ($fileRow as $key => $value) {
-            $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
-            $this->_saveRelation($model, $attribute, $value);
-        }
-    }
 
 
 
@@ -124,14 +114,12 @@ class ImportExport extends \yii\base\Component {
                     $data = $this->_setAttributesByRow($csvRow, $model);
                     $model->load($data);
                     $model->save();
-                    $this->_saveRelationsData($csvRow, $model);
                     $this->_processCustomAttributes($csvRow, $model);
                 } else { //Не нашли основную модель
                     //Подготовим данные для LOAD
                     $data = $this->_setAttributesByRow($csvRow, $model);
                     $model->load($data);
                     $model->save();
-                    $this->_saveRelationsData($csvRow, $model);
                     $this->_processCustomAttributes($csvRow, $model);
                 }
             }
@@ -164,10 +152,37 @@ class ImportExport extends \yii\base\Component {
         foreach ($fileRow as $key => $value) {
             $attribute = $this->_importMeta[array_keys($this->_importMeta)[$key]];
             if(gettype($attribute) == 'string') {
-                $result[$model->formName()][$attribute] = $value;
+                $this->_processStringAttribute($result, $attribute, $value, $model);
             }
         }
         return $result;
+    }
+
+    private function _processStringAttribute(&$result, $attribute, $value, $model) {
+        if(strpos($attribute, '.')) {
+            $this->_processRelationRequiredAttribute($result, $attribute, $value, $model);
+        } else {
+            $result[$model->formName()][$attribute] = $value;
+        }
+
+    }
+
+    private function _processRelationRequiredAttribute(&$result, $attribute, $value, $model) {
+        list($relProp, $relAttr) = explode('.', $attribute);
+
+        $link = $this->_getRelationLinkByAttribute($attribute, $model);
+
+        $linkRelModelAttribute = array_keys($link)[0];
+        $linkBaseModelAttribute = $link[$linkRelModelAttribute];
+
+        $relationModel = $this->_getRelationModelByAttribute($attribute, $model);
+        $relationModel = $relationModel::findOne([$relAttr => $value]);
+        IF($relationModel) {
+            $result[$model->formName()][$linkBaseModelAttribute] = $relationModel->{$linkRelModelAttribute};
+        } else {
+            \Yii::error('Найдена модель для связи ' . $this->_getRelationMethodByAttribute($attribute, $model));
+        }
+
     }
 
     /**
@@ -288,13 +303,9 @@ class ImportExport extends \yii\base\Component {
     }
 
     private function _processExportRelationColumn(string $attribute, ActiveRecord $model) :? string {
-        $relationPath = explode('.', $attribute);
-        $relProp = $relationPath[0];
-        $relAttr = $relationPath[1];
-        $relMethod = 'get' . lcfirst($relProp);
-        $relQuery = $model->$relMethod();
-        $relModel = $relQuery->modelClass;
-        $relLink = $relQuery->link;
+        list($relProp, $relAttr) = explode('.', $attribute);
+        list($relMethod, $relQuery, $relModel, $relLink) = array_values($this->_getRelationMetaByAttribute($attribute, $model));
+
         if($rel = $model->{$relProp}) {
             return $rel->{$relAttr};
         } else {
