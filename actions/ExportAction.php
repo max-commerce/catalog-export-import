@@ -1,4 +1,5 @@
 <?php
+
 namespace maxcom\catalog\exportimport\actions;
 
 use maxcom\catalog\exportimport\components\ImportExport;
